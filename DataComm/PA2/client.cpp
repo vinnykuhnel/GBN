@@ -20,21 +20,11 @@
 using namespace std;
 
 
-/*//serialize packet and send it
-void transmitPacket(int sock, sockaddr_in &server, packet &pack, socklen_t &slen, int packetLength){
-    char serial[packetLength];
-    pack.serialize(serial);
-    if((sendto(sock, serial, packetLength, 0, (struct sockaddr *)&server, slen)) == -1){
-		cout << "failed to send message\n";
-    }
-}*/
-
 
 int main(int argc, char *argv[]){
     if(argc != 4){
         cout << "Please give the DNS name, port number, and file to be transmitted!" << endl;
     }
-    int packetLength = 50;
     //prepare a sockaddr_in for the server being transmitted to
     struct hostent *s;
 	s = gethostbyname(argv[1]);
@@ -55,15 +45,16 @@ int main(int argc, char *argv[]){
     bcopy((char *)s->h_addr, (char *)&server.sin_addr.s_addr, s->h_length);
 
     //Test data to send
-    char buff[512] = "This is the test data!";
+    char buff[512] = "This is the test data brthr!";
 
-    packet transmit(1, 69, strlen(buff), buff);
+    packet pack(91, 169, strlen(buff), buff);
     char serial[512];
-    transmit.serialize(serial);
     memset(serial, 0, 512);
+    pack.serialize(serial);
     if((sendto(sock, serial, 512, 0, (struct sockaddr *)&server, slen)) == -1){
 		cout << "failed to send message\n";
     }
+    
 
     close(sock);
     return 0;

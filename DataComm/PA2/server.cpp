@@ -1,4 +1,4 @@
-// Adam Kuhnel
+	// Adam Kuhnel
 // Date October 23, 2021
 
 #include <stdlib.h>
@@ -18,20 +18,8 @@
 #include <unistd.h>
 using namespace std;
 
-//recieve and deserialize a packet from client
-packet recievePacket(int sock, sockaddr_in &client, socklen_t &clnt){
-    char buffer[512];
-    memset(buffer, 0, 512);
-    packet pack(0, 0, 0, buffer);
-    
-    if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
-		cout << "failed to recieve message\n";
-	}
-    pack.deserialize(buffer);
-    return pack;
-}
 
-int main(int argc, char *argv[]){
+	int main(int argc, char *argv[]){
     if(argc != 3){
         cout << "Please give a valid port and output filename!" << endl;
         return 0;
@@ -59,7 +47,16 @@ int main(int argc, char *argv[]){
 		cout << "Error binding socket";
 	}
     //client transmits a serialized packet object
-    packet pack = recievePacket(sock, client, clnt);
+    
+	char buffer[512];
+    memset(buffer, 0, 512);
+    packet pack(0, 0, 0, buffer);
+    
+    if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
+		cout << "failed to recieve message\n";
+	}
+	cout << buffer << endl;
+	pack.deserialize(buffer);
     pack.printContents();
     close(sock);
     return 0;
