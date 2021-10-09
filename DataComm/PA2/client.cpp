@@ -36,6 +36,9 @@ int main(int argc, char *argv[]){
     if(argc != 4){
         std::cout << "Please give the DNS name, port number, and file to be transmitted!" << std::endl;
     }
+    //Clients loggin files
+    std::ofstream seqLog("clientseqnum.log");
+    std::ofstream ackLog("clientack.log");
 
     //create signal handler for timeout condition
     struct sigaction timeAction;
@@ -95,6 +98,7 @@ int main(int argc, char *argv[]){
             }
             if(sendBase == nextSeq){alarm(2);}
             std::cout << nextSeq << std::endl;
+            seqLog << nextSeq << '\n';
             nextSeq = ((nextSeq + 1) % 8); 
             continue;
         }
@@ -127,11 +131,12 @@ int main(int argc, char *argv[]){
             
             std::cout << nextSeq << std::endl;
             std::cout << window[nextSeq].data << std::endl;
+            seqLog << nextSeq << '\n';
             nextSeq = ((nextSeq + 1) % 8);          
             continue;
         }
         //Window is filled so read socket buffer for Acks
-        packet recievedACK(0, 0, 0, buff);
+        packet recievedACK(0, 0, 0, NULL);
         char temp[512];
         memset(temp, 0, 512);
         if ((recvfrom(sock, temp, 512, 0, (struct sockaddr *)&server, &slen)) == -1){
@@ -142,7 +147,9 @@ int main(int argc, char *argv[]){
 
         recievedACK.deserialize(temp);
         if(sendBase != ((recievedACK.getSeqNum() + 7) % 8)){
+            ackLog << recievedACK.getSeqNum() << '\n';
             sendBase = ((recievedACK.getSeqNum() + 1) % 8);
+            
             //reset alarm and restart for another 2 second window if SB has not caught up to nextseq
             alarm(0);
             alarm(2);
@@ -156,18 +163,29 @@ int main(int argc, char *argv[]){
         
     }
     //Create and send eot packet
-    packet eotPack(3, 0, 0, buff);
-            char eot[512];
-            memset(eot, 0, 512);
-            eotPack.serialize(eot);
+    packet eotPack(3, 3, 0, buff);
+    seqLog << eotPack.getSeqNum();
+    char eot[512];
+    memset(eot, 0, 512);
+    eotPack.serialize(eot);
+    if((sendto(sock, eot, strlen(eot) - 1, 0, (struct sockaddr *)&server, slen)) == -1){
+            std::cout << "failed to send message\n";
+            return -1;
+    }
 
-            if((sendto(sock, eot, strlen(eot) - 1, 0, (struct sockaddr *)&server, slen)) == -1){
-                    std::cout << "failed to send message\n";
-                    return -1;
-            }
+    packet recvEOT(0, 0, 0, NULL);
+    char recvTerminate[512];
+    memset(recvTerminate, 0, 512);
+    if ((recvfrom(sock, recvTerminate, 512, 0, (struct sockaddr *)&server, &slen)) == -1){
+                    std::cout << "failed to recieve message\n";
+    }
+    recvEOT.deserialize(recvTerminate);
+    ackLog << recvEOT.getSeqNum();
     
 
     close(sock);
+    seqLog.close();
+    ackLog.close();
     return 0;
 
 }

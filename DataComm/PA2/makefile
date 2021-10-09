@@ -10,4 +10,4 @@ server: server.o packet.o
 	g++ server.cpp packet.cpp -o server	
 	
 clean:
-	\rm *.o client server
+	\rm *.o client server *.log

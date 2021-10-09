@@ -16,14 +16,16 @@
 #include <netdb.h>
 #include "packet.h" // include packet class
 #include <unistd.h>
-using namespace std;
+
 
 
 	int main(int argc, char *argv[]){
     if(argc != 3){
-        cout << "Please give a valid port and output filename!" << endl;
+        std::cout << "Please give a valid port and output filename!" << std::endl;
         return 0;
     }
+	//Recieves Servers logging info
+	std::ofstream LogFile("arrival.log");
 
 	//bind socket and setup random port to initiate file transfer
 	int port = atoi(argv[1]);
@@ -36,7 +38,7 @@ using namespace std;
 
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	{
-		cout << "Error creating socket";
+		std::cout << "Error creating socket";
 		return -1;
 	}
 	memset((char *)&server, 0, sizeof(server));
@@ -45,14 +47,14 @@ using namespace std;
 	server.sin_addr.s_addr = htonl(INADDR_ANY);
 	if (bind(sock, (struct sockaddr *)&server, sizeof(server)) == -1)
 	{
-		cout << "Error binding socket";
+		std::cout << "Error binding socket";
 		return -1;
 	}
     
 	//listen until client sends EOT packet
     bool notEOT = true;
 	int currPack = 0;
-	ofstream TxtFile(argv[2]);
+	std::ofstream TxtFile(argv[2]);
 	
 	while (notEOT) {
 		char buffer[512];
@@ -60,7 +62,7 @@ using namespace std;
 		packet pack(0, 0, 0, buffer);
 		
 		if ((recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt)) == -1){
-			cout << "failed to recieve message\n";
+			std::cout << "failed to recieve message\n";
 			return -1;
 		}
 
@@ -71,25 +73,41 @@ using namespace std;
 			if(pack.getSeqNum() == (currPack % 8)){
 				//write to output file and send acknowledgement
 				TxtFile << pack.getData();
+				LogFile << pack.getSeqNum() << '\n';
 				packet ACK(0, currPack % 8, 0, buffer);
 				char acknowledge[512];
 				memset(acknowledge, 0, 512);
 				ACK.serialize(acknowledge);
 				if((sendto(sock, acknowledge, strlen(acknowledge), 0, (struct sockaddr *)&client, clnt)) == -1){
-					cout << "Error in failed sendto\n";
+					std::cout << "Error in failed sendto\n";
 					return -1;
 				}
-				cout << currPack << endl;
+				std::cout << currPack << std::endl;
 				currPack++;
 			}
 			//If not expected packet
 			else{continue;}
 		}
 		//End of Transmission case
-		else{notEOT = false;}
+		else{
+			LogFile << pack.getSeqNum();
+			//send transmission termintation packet
+			packet eotPack(2, pack.getSeqNum(), 0, NULL);
+            char eot[512];
+            memset(eot, 0, 512);
+            eotPack.serialize(eot);
+
+            if((sendto(sock, eot, strlen(eot) - 1, 0, (struct sockaddr *)&client, clnt)) == -1){
+                    std::cout << "failed to send termination packet\n";
+                    return -1;
+            }
+
+			notEOT = false;
+		}
 		
 	}
 	//release socket and file handles
+	LogFile.close();
 	TxtFile.close();
 	close(sock);
 	return 0;
