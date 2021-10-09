@@ -37,6 +37,7 @@ using namespace std;
 	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 	{
 		cout << "Error creating socket";
+		return -1;
 	}
 	memset((char *)&server, 0, sizeof(server));
 	server.sin_family = AF_INET;
@@ -45,6 +46,7 @@ using namespace std;
 	if (bind(sock, (struct sockaddr *)&server, sizeof(server)) == -1)
 	{
 		cout << "Error binding socket";
+		return -1;
 	}
     
 	//listen until client sends EOT packet
@@ -57,7 +59,7 @@ using namespace std;
 		memset(buffer, 0, 512);
 		packet pack(0, 0, 0, buffer);
 		
-		if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
+		if ((recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt)) == -1){
 			cout << "failed to recieve message\n";
 			return -1;
 		}
@@ -73,7 +75,7 @@ using namespace std;
 				char acknowledge[512];
 				memset(acknowledge, 0, 512);
 				ACK.serialize(acknowledge);
-				if((sendto(sock, acknowledge, strlen(acknowledge) - 1, 0, (struct sockaddr *)&client, clnt)) == -1){
+				if((sendto(sock, acknowledge, strlen(acknowledge), 0, (struct sockaddr *)&client, clnt)) == -1){
 					cout << "Error in failed sendto\n";
 					return -1;
 				}
