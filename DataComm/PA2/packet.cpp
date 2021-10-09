@@ -88,7 +88,7 @@ void packet::deserialize(char * spacket){
 	this->seqnum = strtol (itr, &null_end, 10);
 		
 	itr = strtok(NULL, " ");
-	this->length = strtol (itr, &null_end, 10) + 1;
+	this->length = strtol (itr, &null_end, 10);
 	
 	if(this->length == 0){
 		data = NULL;

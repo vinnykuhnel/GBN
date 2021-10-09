@@ -48,17 +48,20 @@ using namespace std;
 	}
     //client transmits a serialized packet object
     
-	char buffer[512];
-    memset(buffer, 0, 512);
-    packet pack(0, 0, 0, buffer);
-    
-    if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
-		cout << "failed to recieve message\n";
+	while (1) {
+		char buffer[512];
+		memset(buffer, 0, 512);
+		packet pack(0, 0, 0, buffer);
+		
+		if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
+			cout << "failed to recieve message\n";
+		}
+		cout << buffer << endl;
+		pack.deserialize(buffer);
+		pack.printContents();
+		
 	}
-	cout << buffer << endl;
-	pack.deserialize(buffer);
-    pack.printContents();
-    close(sock);
-    return 0;
+	close(sock);
+	return 0;
 }
 

@@ -44,15 +44,36 @@ int main(int argc, char *argv[]){
 	server.sin_port = htons(port);
     bcopy((char *)s->h_addr, (char *)&server.sin_addr.s_addr, s->h_length);
 
-    //Test data to send
-    char buff[512] = "This is the test data brthr!";
+    //Data to be sent
+    char buff[512];
+    ifstream in(argv[3]);
+	if(!in){
+        cout << "Error! File does not exist";
+        return -1;
+    }
+    //keep track of current iteration and hold list of serialized packets already transmitted
+    int packetNum = 0;
+    char *sent[8];
 
-    packet pack(91, 169, strlen(buff), buff);
-    char serial[512];
-    memset(serial, 0, 512);
-    pack.serialize(serial);
-    if((sendto(sock, serial, 512, 0, (struct sockaddr *)&server, slen)) == -1){
-		cout << "failed to send message\n";
+    while(in.eof() == 0){
+        //read 30 characters from file until and handle the final modulo case
+        in.read(buff, 30);
+        packetNum++;
+        //handle if remainder of 4 is nonzero
+        if(in.gcount() < 30){
+            for(int i = 29; i >= in.gcount(); i--){
+                buff[i] = '\0';
+            }	
+        }
+
+        packet pack(1, packetNum % 8, strlen(buff), buff);
+        char serial[512];
+        memset(serial, 0, 512);
+        pack.serialize(serial);
+        sent[packetNum % 8] = serial;
+        if((sendto(sock, serial, strlen(serial) - 1, 0, (struct sockaddr *)&server, slen)) == -1){
+            cout << "failed to send message\n";
+        }
     }
     
 
