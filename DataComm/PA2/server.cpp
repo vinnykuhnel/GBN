@@ -46,21 +46,49 @@ using namespace std;
 	{
 		cout << "Error binding socket";
 	}
-    //client transmits a serialized packet object
     
-	while (1) {
+	//listen until client sends EOT packet
+    bool notEOT = true;
+	int currPack = 0;
+	ofstream TxtFile(argv[2]);
+	
+	while (notEOT) {
 		char buffer[512];
 		memset(buffer, 0, 512);
 		packet pack(0, 0, 0, buffer);
 		
 		if (recvfrom(sock, buffer, 512, 0, (struct sockaddr *)&client, &clnt) == -1){
 			cout << "failed to recieve message\n";
+			return -1;
 		}
-		cout << buffer << endl;
+
 		pack.deserialize(buffer);
-		pack.printContents();
+		//Close connection on Client EOT packet
+		if(pack.getType() != 3){
+			//If expected packet
+			if(pack.getSeqNum() == (currPack % 8)){
+				//write to output file and send acknowledgement
+				TxtFile << pack.getData();
+				packet ACK(0, currPack % 8, 0, buffer);
+				char acknowledge[512];
+				memset(acknowledge, 0, 512);
+				ACK.serialize(acknowledge);
+				if((sendto(sock, acknowledge, strlen(acknowledge) - 1, 0, (struct sockaddr *)&client, clnt)) == -1){
+					cout << "Error in failed sendto\n";
+					return -1;
+				}
+				cout << currPack << endl;
+				currPack++;
+			}
+			//If not expected packet
+			else{continue;}
+		}
+		//End of Transmission case
+		else{notEOT = false;}
 		
 	}
+	//release socket and file handles
+	TxtFile.close();
 	close(sock);
 	return 0;
 }

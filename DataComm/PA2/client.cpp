@@ -58,7 +58,7 @@ int main(int argc, char *argv[]){
     while(in.eof() == 0){
         //read 30 characters from file until and handle the final modulo case
         in.read(buff, 30);
-        packetNum++;
+        
         //handle if remainder of 4 is nonzero
         if(in.gcount() < 30){
             for(int i = 29; i >= in.gcount(); i--){
@@ -66,16 +66,27 @@ int main(int argc, char *argv[]){
             }	
         }
 
-        packet pack(1, packetNum % 8, strlen(buff), buff);
+        packet pack(1, packetNum % 8, strlen(buff) + 1, buff);
         char serial[512];
         memset(serial, 0, 512);
         pack.serialize(serial);
         sent[packetNum % 8] = serial;
-        if((sendto(sock, serial, strlen(serial) - 1, 0, (struct sockaddr *)&server, slen)) == -1){
+        if((sendto(sock, serial, strlen(serial), 0, (struct sockaddr *)&server, slen)) == -1){
             cout << "failed to send message\n";
         }
+        packetNum++;
+        cout << packetNum << endl;
+        cout << serial << endl;
     }
-    
+    //Create and send eot packet
+    packet eotPack(3, 0, 0, NULL);
+    char eot[512];
+    memset(eot, 0, 512);
+    eotPack.serialize(eot);
+
+    if((sendto(sock, eot, strlen(eot) - 1, 0, (struct sockaddr *)&server, slen)) == -1){
+            cout << "failed to send message\n";
+        }
 
     close(sock);
     return 0;
