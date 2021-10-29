@@ -16,8 +16,7 @@ def testWindow(windowSize: int, remainingDevices: int, slotCount: int):
             remainingDevices -= 1            
             if remainingDevices == 0:
                 break
-    print(arr)
-    print(slotCount)
+    
 
     return remainingDevices, slotCount
 
@@ -28,6 +27,7 @@ def linearBack(devices: int):
     while devices > 0:
         devices, slotCount = testWindow(windowSize, devices, slotCount)
         windowSize += 1
+    return slotCount
     
 def binaryBack(devices: int):
     windowSize = 2
@@ -35,12 +35,35 @@ def binaryBack(devices: int):
     while devices > 0:
         devices, slotCount = testWindow(windowSize, devices, slotCount)
         windowSize *= 2
+    return slotCount
 
 def logBack(devices: int):
     windowSize = 4
     slotCount = 0
     while devices > 0:
         devices, slotCount = testWindow(windowSize, devices, slotCount)
-        windowSize = m.floor(((1 + (1/(m.log(m.log(windowSize, 2), 2)))) * windowSize))   
+        windowSize = m.floor(((1 + (1/(m.log(m.log(windowSize, 2), 2)))) * windowSize)) 
+    return slotCount  
 
-logBack(6)
+def deviceInc():
+    devices = 100
+    l = open("linearLatency.txt", "w")
+    b = open("binaryLatency.txt", "w")
+    log = open("loglogLatency.txt", "w")
+    while devices <= 6000:
+        i = 10
+        linearSlots = 0
+        binarySlots = 0
+        logSlots = 0
+        for j in range(i):
+            linearSlots += linearBack(devices)
+            binarySlots += binaryBack(devices)
+            logSlots += logBack(devices)           
+            j += 1
+            
+        l.write(str(linearSlots / 10) + '\n')
+        b.write(str(binarySlots / 10) + '\n')
+        log.write(str(logSlots / 10) + '\n')
+        devices += 100
+
+deviceInc()
