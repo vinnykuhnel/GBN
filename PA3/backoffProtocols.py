@@ -1,4 +1,5 @@
 import random
+import math as m
 
 def testWindow(windowSize: int, remainingDevices: int, slotCount: int):
     arr = [0] * windowSize
@@ -17,6 +18,7 @@ def testWindow(windowSize: int, remainingDevices: int, slotCount: int):
                 break
     print(arr)
     print(slotCount)
+
     return remainingDevices, slotCount
 
 
@@ -27,5 +29,18 @@ def linearBack(devices: int):
         devices, slotCount = testWindow(windowSize, devices, slotCount)
         windowSize += 1
     
+def binaryBack(devices: int):
+    windowSize = 2
+    slotCount = 0
+    while devices > 0:
+        devices, slotCount = testWindow(windowSize, devices, slotCount)
+        windowSize *= 2
 
-linearBack(5)
+def logBack(devices: int):
+    windowSize = 4
+    slotCount = 0
+    while devices > 0:
+        devices, slotCount = testWindow(windowSize, devices, slotCount)
+        windowSize = m.floor(((1 + (1/(m.log(m.log(windowSize, 2), 2)))) * windowSize))   
+
+logBack(6)
